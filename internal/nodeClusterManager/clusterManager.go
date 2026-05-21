@@ -7,7 +7,7 @@ import (
 
 var AllNodes []*node.Node
 var regMu sync.Mutex
-
+var HmNodes = make(map[string]*node.Node) //nodeid:pointer
 func RegisterNode(n *node.Node) {
 
 	regMu.Lock()
@@ -15,6 +15,7 @@ func RegisterNode(n *node.Node) {
 	//frontend for stataus , then inconsistent info will be given
 	//to forgo it we need locks
 	AllNodes = append(AllNodes, n)
+	HmNodes[n.Id] = n
 }
 
 func GetAllNodeStatus() map[string]node.NodeStatus {
