@@ -9,30 +9,30 @@ import (
 
 // LockManager acts as our central, thread-safe Distributed Lock Coordinator
 type LockManager struct {
-	CurrentHolder string                // ID of the node currently owning the lock
-	WaitQueue     []string              // FIFO slice tracking queued node IDs
-	FencingToken  int64                 // Monotonically increasing generation ID to stop stale writes
-	LeaseDuration time.Duration         // How long a lock stays valid without a heartbeat (e.g., 5s)
-	LeaseTimer    *time.Timer           // pointer to timer obj,The underlying OS countdown timer
-	mu            sync.Mutex            // Safeguards global manager variables from competing threads
-	OutgoingNetworkPipe  chan protocol.Message // Channel leading back out to the nodes (via network simulation)
+	CurrentHolder       string                // ID of the node currently owning the lock
+	WaitQueue           []string              // FIFO slice tracking queued node IDs
+	FencingToken        int64                 // Monotonically increasing generation ID to stop stale writes
+	LeaseDuration       time.Duration         // How long a lock stays valid without a heartbeat (e.g., 5s)
+	LeaseTimer          *time.Timer           // pointer to timer obj,The underlying OS countdown timer
+	mu                  sync.Mutex            // Safeguards global manager variables from competing threads
+	OutgoingNetworkPipe chan protocol.Message // Channel leading back out to the nodes (via network simulation)
 }
 
 // NewLockManager initializes our central controller with strict defaults
 func NewLockManager(leaseDuration time.Duration, OutgoingNetworkPipe chan protocol.Message) *LockManager {
 	return &LockManager{
-		CurrentHolder: "",
-		WaitQueue:     []string{},
-		FencingToken:  0,
-		LeaseDuration: leaseDuration,
-		OutgoingNetworkPipe:  OutgoingNetworkPipe,
+		CurrentHolder:       "",
+		WaitQueue:           []string{},
+		FencingToken:        0,
+		LeaseDuration:       leaseDuration,
+		OutgoingNetworkPipe: OutgoingNetworkPipe,
 	}
 }
 
 // ProcessMessage accepts an incoming packet and handles it according to its type
 func (lm *LockManager) ProcessMessage(msg protocol.Message) {
-	lm.mu.Lock()// lock is taken while reaing all values of struct so that no two process will have conflict at the same time
-	defer lm.mu.Unlock()//this is done only after executing the mapped function 
+	lm.mu.Lock()         // lock is taken while reaing all values of struct so that no two process will have conflict at the same time
+	defer lm.mu.Unlock() //this is done only after executing the mapped function
 
 	// Exactly what you guessed! Going over every message depending on type:
 	switch msg.Type {
@@ -43,7 +43,7 @@ func (lm *LockManager) ProcessMessage(msg protocol.Message) {
 		lm.handleRelease(msg.NodeId)
 
 	case protocol.MsgHeartbeat:
-		lm.handleHeartbeat(msg.NodeId,msg.Token)
+		lm.handleHeartbeat(msg.NodeId, msg.Token)
 	}
 }
 
@@ -78,11 +78,11 @@ func (lm *LockManager) handleRelease(NodeId string) {
 
 	lm.stopLeaseTimer()
 	lm.rotateLock()
-	
+
 }
 
-func (lm *LockManager) handleHeartbeat(NodeId string,tokenRecieved int64) {
-	if tokenRecieved!=lm.FencingToken  {
+func (lm *LockManager) handleHeartbeat(NodeId string, tokenRecieved int64) {
+	if tokenRecieved != lm.FencingToken {
 		// Ignore heartbeats from late/expired nodes
 		return
 	}
@@ -90,7 +90,7 @@ func (lm *LockManager) handleHeartbeat(NodeId string,tokenRecieved int64) {
 	// Postpone the eviction countdown clock! Reset it back to 5 seconds.
 	lm.stopLeaseTimer()
 	lm.startLeaseTimer(NodeId)
-	
+
 }
 
 // --- INTERNAL CONCURRENCY UTILITIES ---
@@ -100,7 +100,7 @@ func (lm *LockManager) grantLock(nodeID string) {
 	lm.FencingToken++ // Increment generation sequence number
 
 	fmt.Printf("[MANAGER] Lock GRANTED to %s. Fencing Token: %d\n", nodeID, lm.FencingToken)
-	
+
 	// Start the countdown timer on the manager's desk
 	lm.startLeaseTimer(nodeID)
 
@@ -108,8 +108,8 @@ func (lm *LockManager) grantLock(nodeID string) {
 	go func(target string, token int64) {
 		lm.OutgoingNetworkPipe <- protocol.Message{
 			NodeId: target,
-			Type:     protocol.MsgGrant,
-			Token:    token,
+			Type:   protocol.MsgGrant,
+			Token:  token,
 		}
 	}(nodeID, lm.FencingToken)
 }
@@ -131,19 +131,20 @@ func (lm *LockManager) rotateLock() {
 func (lm *LockManager) startLeaseTimer(nodeID string) {
 	// time.AfterFunc spawns a background thread that sleeps for 5 seconds.
 	// If it isn't stopped before the timer pops, it triggers the eviction code!
+	fmt.Println(("ticker start"))
 	lm.LeaseTimer = time.AfterFunc(lm.LeaseDuration, func() {
 		lm.mu.Lock()
 		defer lm.mu.Unlock()
 
 		// Safety double-check: Verify the node hasn't changed or released in those 5s
-		if lm.CurrentHolder == nodeID{
+		if lm.CurrentHolder == nodeID {
 			fmt.Printf("[MANAGER ] !!! LEASE EXPIRED !!! Node %s missed heartbeats. Forcibly evicting...\n", nodeID)
 			go func(target string) {
-                lm.OutgoingNetworkPipe <- protocol.Message{
+				lm.OutgoingNetworkPipe <- protocol.Message{
 					NodeId: target, // Destination node ID
-					Type:     protocol.MsgEvict,
-                }
-            }(nodeID)
+					Type:   protocol.MsgEvict,
+				}
+			}(nodeID)
 			lm.rotateLock() // Strip lock away and promote the next queued node!
 		}
 	})
@@ -152,16 +153,18 @@ func (lm *LockManager) startLeaseTimer(nodeID string) {
 func (lm *LockManager) stopLeaseTimer() {
 	if lm.LeaseTimer != nil {
 		lm.LeaseTimer.Stop()
+		fmt.Println(("ticker stopped"))
 	}
 }
 
-// Start boots up the central manager's consumer loop. 
+// Start boots up the central manager's consumer loop.
 // It reads sequentially from the incoming network pipeline and processes each message.
 func (lm *LockManager) Start(incomingPipe chan protocol.Message) {
 	// We run this in a background goroutine so it doesn't freeze main.go
 	go func() {
-		fmt.Println("[MANAGER] Central Lock Coordinator online. Listening for incoming node packets...")
-		
+		fmt.Println("[MANAGER] Lock Coordinator online")
+		fmt.Println("NETWORK->MANAGER online , Listening for incoming node packets...")
+
 		// This is the missing piece! It loops over the channel indefinitely.
 		for msg := range incomingPipe {
 			// Pass the message directly into your thread-safe switchboard!
