@@ -1,72 +1,49 @@
 package main
 
-// Package Manager imports Package Network (to read the incoming channel).
-
-// Package Network imports Package Manager (to handle the return pipeline processing).
-
-// The moment you type go build, the Go compiler looks at this loop, throws its hands up, and spits out a hard fatal error:
-// import cycle not allowed. Go strictly forbids packages from importing each other because it makes it mathematically impossible
-// for the compiler to determine which package to compile first.
-
-//thats why bothe channels to and from manager are created outside and passed on as arguments
-
 import (
-	"distributed_lock_manager/internal/manager"
-	"distributed_lock_manager/internal/network"
-	"distributed_lock_manager/internal/node"
-	"distributed_lock_manager/internal/protocol"
+	"distributed_lock_manager/internal/handlers"
+	"distributed_lock_manager/internal/startup"
 	"fmt"
-	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	server := gin.Default()
 
-	FromManagerChannel := make(chan protocol.Message)
-	ToManagerChannel := make(chan protocol.Message)
+	// IMPORTANT FOR FULL-STACK: Allow React (localhost:5173) to talk to Go (localhost:8080)
+	server.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 
-	//first create network
-	networkSimulator := network.NewNetworkSimulator(ToManagerChannel)
-	//create lock manager
-	lockManager := manager.NewLockManager(5*time.Second, FromManagerChannel)
-
-	//now start listeing loops in both nw and manager
-	networkSimulator.StartPipeline()
-	networkSimulator.ReturnPipeline(FromManagerChannel)
-	lockManager.Start(ToManagerChannel)
-
-	var n *node.Node
-	//now im creating 4 nodes
-	for i := 0; i < 1; i++ {
-		bufferChan := make(chan protocol.Message, 50)
-		n = node.CreateNode(networkSimulator.FromNodePipe, bufferChan)
-		networkSimulator.AddToRegistry(n.Id, bufferChan) //initialise node registry
-		n.NodeBufferIteration()
-		n.RequestLock()
+	//initailse all channels
+	startup.Initialize()
+	nodes := server.Group("/nodes")
+	{
+		nodes.GET("", handlers.Create_node)
+		nodes.GET("/status", handlers.Get_node_status)
+		nodes.POST("/:id/kill", handlers.Node_kill_status)
+		nodes.POST("/:id/request", handlers.Node_request_status)
 	}
+	//// 1. Path Param: Explicitly type the colon ":" followed by the name
+	//server.POST("/api/nodes/:node_id/kill", handlers.Node_kill_status)
 
-	//networkSimulator.UpdateDropRate(0.4)
-	//networkSimulator.UpdateLatencyBounds(3, 5)
-	timer := time.NewTimer(10 * time.Second)
-	fmt.Println(("60 sec timer started , after this node will be killed"))
-	defer timer.Stop() // Clean up the timer resources when the function exits
+	// 2. Query Param: Type the plain static path. NO question marks, NO colons!
+	//server.PUT("/api/network/droprate", handlers.Change_droprate)
 
-	val := <-timer.C
+	server.PUT("/droprate", handlers.Change_droprate)
+	server.PUT("/latency", handlers.Change_latency)
+	server.GET("/exit", handlers.Exit_server)
+	server.Run(":8080")
+	<-startup.ShutdownChan
 
-	// 2. Since it successfully unblocked, the timer definitely fired.
-	// A zero time check ensures the value is valid.
-	if !val.IsZero() {
-		fmt.Printf("[NODE %s] Work simulation lease expired. Automatically releasing lock...\n", n.Id)
-
-		// 3. Clear your state resources
-		n.ReleaseLock()
-
-		// 4. If you want to transition immediately to a new 10-second wait phase,
-		// you must block on a fresh timer channel right here:
-		cooldownTimer := time.NewTimer(10 * time.Second)
-		defer cooldownTimer.Stop()
-
-		<-cooldownTimer.C
-		fmt.Printf("[NODE %s] Cooldown phase complete.\n", n.Id)
-	} //as there are no options, go makes the thread in which main is running to sleep,so that our background theread can continue else everything will pause as soon as end of main thread is reached
-	//when all the nodes are idle, the channels aka routines are asleeep, main is also asleep, so when go detects this dedlock, it forcefully exits the prog
+	// Clean up background pipelines here if necessary before the process closes
+	fmt.Println("Server stopped cleanly.")
 }
