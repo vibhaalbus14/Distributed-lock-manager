@@ -3,6 +3,7 @@ package node
 import (
 	"distributed_lock_manager/internal/protocol"
 	"fmt"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -173,8 +174,19 @@ func (n *Node) NodeBufferIteration() {
 				n.CurrentToken = msg.Token // Cache the incremented fencing token in local RAM
 				fmt.Printf("[NODE %s]  LOCK GRANTED! State -> HOLDING. Fencing Token: %d\n", n.Id, msg.Token)
 				n.Mu.Unlock()
-				// Automagic Ignition: Automatically kick off our parallel heartbeat ticking thread!
+
 				n.StartHeartbeatLoop()
+				//a node that has lock must let go of it after some intended op
+				//we do that by using timer ,after which the lock is released
+				val := rand.IntN(15) + 5 //setting 5 as base
+				duration := time.Duration(val) * time.Second
+				fmt.Printf("[NODE %s] started performing operation, it will last for %d sec", n.Id[:5], val)
+
+				// It will wait for 'duration' to pass, then call n.ReleaseLock() automatically.
+				time.AfterFunc(duration, func() {
+					fmt.Printf("[NODE %s] Operation completed,  releasing lock...\n", n.Id[:5])
+					n.ReleaseLock() // Call your node release method here
+				})
 
 			case protocol.MsgEvict:
 				fmt.Println("inside message evict")
