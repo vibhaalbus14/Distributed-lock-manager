@@ -29,8 +29,8 @@ func main() {
 	{
 		nodes.GET("", handlers.Create_node)
 		nodes.GET("/status", handlers.Get_node_status)
-		nodes.POST("/:id/kill", handlers.Node_kill_status)
-		nodes.POST("/:id/request", handlers.Node_request_status)
+		nodes.POST("/kill", handlers.Node_kill_status)
+		nodes.POST("/request", handlers.Node_request_status)
 	}
 	//// 1. Path Param: Explicitly type the colon ":" followed by the name
 	//server.POST("/api/nodes/:node_id/kill", handlers.Node_kill_status)
