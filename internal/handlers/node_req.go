@@ -8,7 +8,13 @@ import (
 )
 
 func Node_request_status(ctx *gin.Context) {
-	nodeId := ctx.Param("id")
+
+	var v Val
+	err := ctx.ShouldBindJSON(&v)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"res": "please provide id in string format"})
+	}
+	nodeId := v.Id
 
 	// Look up the live memory pointer in your cluster map
 	n, exists := cluster_manager.HmNodes[nodeId]
