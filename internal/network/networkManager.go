@@ -15,6 +15,14 @@ const (
 	DefaultMaxDelay = 1000 * time.Millisecond // 300ms ceiling
 )
 
+type NetworkEvent struct {
+	Event   string
+	Message string
+}
+
+var NetworkLogChannel = make(chan NetworkEvent, 100) //network channel , this is the conveyor belt from which
+//messages are taken and given to client by websockets
+
 // NetworkSimulator acts as the central hub and chaos engine.
 type NetworkSimulator struct {
 	dropRate float64
@@ -107,6 +115,14 @@ func (ns *NetworkSimulator) StartPipeline() {
 			//a random number is generated and if we get lucky and >=drop rate, it doesnt get dropped
 			if rand.Float64() < currentDropRate {
 				fmt.Printf("[NETWORK CHAOS] !!! PACKET DROPPED !!! Discarded %d from %s\n", msg.Type, msg.NodeId)
+				//add this event to NewtworkLogChannel
+				select {
+				case NetworkLogChannel <- NetworkEvent{
+					Event:   "PACKET_DROPPED",
+					Message: fmt.Sprintf("Packet from %s sending status %s to Lock manager was dropped", msg.NodeId[:5], protocol.MsgMap[msg.Type]),
+				}:
+				default:
+				}
 				continue //move onto next message packet if avail
 			}
 
@@ -123,6 +139,13 @@ func (ns *NetworkSimulator) StartPipeline() {
 			//but the parent routine cant wait till the delay is completed
 			//so we spin off a new rotine/thread for every packet that runs in the background
 			go func(m protocol.Message, delay time.Duration) {
+				select {
+				case NetworkLogChannel <- NetworkEvent{
+					Event:   "PACKET_DELAYED",
+					Message: fmt.Sprintf("Packet from %s sending status %s to Lock manager is delayed by %s", msg.NodeId[:5], protocol.MsgMap[msg.Type], delay),
+				}:
+				default:
+				}
 				time.Sleep(delay)
 				ns.ToManagerPipe <- m //feed the entire message into manager's channel
 			}(msg, randomDelay)
@@ -150,6 +173,15 @@ func (ns *NetworkSimulator) ReturnPipeline(FromManager chan protocol.Message) {
 			// 3. PROCESS RETURN DROPS: Manager replies can get lost in flight too!
 			if rand.Float64() < currentDropRate {
 				fmt.Printf("[NETWORK CHAOS] !!! RETURN PACKET DROPPED !!! Lost %d destined for %s\n", msg.Type, msg.NodeId)
+
+				select {
+				case NetworkLogChannel <- NetworkEvent{
+					Event:   "PACKET_DROPPED",
+					Message: fmt.Sprintf("Packet from Lock manager sending status %s to %s was dropped", protocol.MsgMap[msg.Type], msg.NodeId[:5]),
+				}:
+				default:
+				}
+
 				continue // Packet is deleted, move to next message
 			}
 
@@ -163,6 +195,13 @@ func (ns *NetworkSimulator) ReturnPipeline(FromManager chan protocol.Message) {
 			// 5. Asynchronous Delayed Delivery to the specific Node Buffer
 			// We spin up a goroutine per packet so lagging packets don't queue block each other!
 			go func(m protocol.Message, delay time.Duration) {
+				select {
+				case NetworkLogChannel <- NetworkEvent{
+					Event:   "PACKET_DELAYED",
+					Message: fmt.Sprintf("Packet from lock manager sending status %s to %s is delayed by %s", protocol.MsgMap[msg.Type], msg.NodeId[:5], delay),
+				}:
+				default:
+				}
 				time.Sleep(delay) // Simulated return flight wire transit time
 
 				ns.mu.RLock()
