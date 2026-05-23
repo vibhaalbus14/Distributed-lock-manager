@@ -85,6 +85,13 @@ func Network_stream(ctx *gin.Context) {
 				fmt.Println("Closing Connection: Client disconnected from manger free pipe.")
 				return
 			}
+		case exitChan := <-ExitChan:
+			fmt.Println("exit chan inside")
+			err := conn.WriteJSON(WebSocketPayload{Type: "EXIT_APP", Payload: exitChan})
+			if err != nil {
+				fmt.Println("Closing Connection: Client disconnected from manger exit pipe.")
+				return
+			}
 		}
 	}
 }

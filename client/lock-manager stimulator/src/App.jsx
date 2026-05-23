@@ -5,6 +5,7 @@ import Network from './components/network';
 import LockManager from './components/lockManager';
 import appStyles from './app.module.css';
 
+const initialData = { fencingToken: 0, currentHolder: "", nodeStatus: {}, opTime: 0 ,logMsg:{}};
 function reducer(state, action) {
   switch (action.type) {
     case "NODE_DELTA":
@@ -39,6 +40,9 @@ function reducer(state, action) {
         ...state,
             currentHolder:"",opTime:0,logMsg:{}
       };
+    case "EXIT_APP":
+      
+      return initialData
 
 
     default:
@@ -47,7 +51,7 @@ function reducer(state, action) {
 }
 
 export default function App() {
-  const initialData = { fencingToken: 0, currentHolder: "", nodeStatus: {}, opTime: 0 ,logMsg:{}};
+  
   const [clusterData, dispatcher] = useReducer(reducer, initialData);
 
   // Multi-Channel Live WebSocket Data Listener
@@ -72,6 +76,9 @@ export default function App() {
         case "CHAN_FREE":
           dispatcher({ type: "CHAN_FREE" });//payload not necessary here
           break;
+        case "EXIT_APP":
+          dispatcher({ type: "EXIT_APP" });//payload not necessary here
+          break;
         default:
           // Raw string logs ("LOG") bypass this and are captured inside network.jsx
           throw new Error("Unsupported action")
@@ -83,7 +90,7 @@ export default function App() {
   }, []); 
 
   const handleExitServer = async () => {
-    const confirmShutdown = window.confirm("Are you sure you want to completely terminate the Go cluster instance?");
+    const confirmShutdown = window.confirm("Are you sure you want to completely restart the Go Lock manager,this will delete all existing nodes?");
     if (!confirmShutdown) return;
 
     try {
@@ -91,9 +98,8 @@ export default function App() {
         method: "GET", // Automatically matches your preferred endpoint router configuration
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        alert(`Backend Response: ${data.message || "Shutdown initialized."}`);
+      if (!res.ok) {
+       console.error("Failed to execute server shutdown command sequence:",res.ok);
       }
     } catch (err) {
       console.error("Failed to execute server shutdown command sequence:", err);
@@ -109,7 +115,7 @@ export default function App() {
       <h2><center>Distributed Lock Manager Dashboard</center></h2>
       <div className={appStyles.exitActionContainer}>
         <button onClick={handleExitServer} className={appStyles.exitBtn}>
-          🛑 Shutdown Cluster Engine
+          🛑Restart Cluster Engine
         </button>
       </div>
       
