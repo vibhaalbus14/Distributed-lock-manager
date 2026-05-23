@@ -3,15 +3,18 @@ package handlers
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Exit_server(ctx *gin.Context) {
-	// 1. Tell React that the server is shutting down successfully
+	// Send the shutdown confirmation response back to React
 	ctx.JSON(http.StatusOK, gin.H{"message": "Server shutting down ..."})
 
-	// 2. Push a termination signal into the channel in a background thread
-	// so it doesn't block this current HTTP response from finishing
-	os.Exit(0)
+	// Launch a goroutine to wait slightly, allowing the network buffers to flush
+	go func() {
+		time.Sleep(2000 * time.Millisecond) // Half a second is plenty of time
+		os.Exit(0)
+	}()
 }
