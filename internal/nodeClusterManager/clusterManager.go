@@ -8,6 +8,7 @@ import (
 var AllNodes []*node.Node
 var regMu sync.Mutex
 var HmNodes = make(map[string]*node.Node) //nodeid:pointer
+
 func RegisterNode(n *node.Node) {
 
 	regMu.Lock()
