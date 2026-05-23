@@ -16,6 +16,7 @@ func Create_node(ctx *gin.Context) {
 	n := node.CreateNode(ns.FromNodePipe, bufferChan)
 	go ns.AddToRegistry(n.Id, bufferChan) //initialise node registry
 	go n.NodeBufferIteration()
+	node.PushDeltaChannel(n) //pushing node info to channel tas pass onto client
 	go n.RequestLock()
 	go cluster_manager.RegisterNode(n)
 
