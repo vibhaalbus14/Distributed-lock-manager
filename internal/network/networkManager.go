@@ -28,7 +28,7 @@ type NetworkSimulator struct {
 	dropRate float64
 	minDelay time.Duration
 	maxDelay time.Duration
-	mu       sync.RWMutex // Protects configuration fields from concurrent frontend updates => readers-writer protocol
+	Mu       sync.RWMutex // Protects configuration fields from concurrent frontend updates => readers-writer protocol
 	//r-r =>allowed
 	//r-w not allowed
 	//w-r not allowd
@@ -58,8 +58,8 @@ func NewNetworkSimulator(ToManagerPipe chan protocol.Message) *NetworkSimulator 
 
 // UpdateDropRate allows the React frontend to dynamically change packet loss intensity
 func (ns *NetworkSimulator) UpdateDropRate(newRate float64) {
-	ns.mu.Lock() // Exclusive Write Lock
-	defer ns.mu.Unlock()
+	ns.Mu.Lock() // Exclusive Write Lock
+	defer ns.Mu.Unlock()
 
 	// Safe bounding check
 	if newRate < 0.0 {
@@ -74,8 +74,8 @@ func (ns *NetworkSimulator) UpdateDropRate(newRate float64) {
 
 // UpdateLatencyBounds allows the React frontend to adjust network lag ranges in milliseconds
 func (ns *NetworkSimulator) UpdateLatencyBounds(minMs, maxMs int) {
-	ns.mu.Lock() // Exclusive Write Lock
-	defer ns.mu.Unlock()
+	ns.Mu.Lock() // Exclusive Write Lock
+	defer ns.Mu.Unlock()
 
 	minDuration := time.Duration(minMs) * time.Millisecond
 	maxDuration := time.Duration(maxMs) * time.Millisecond
@@ -103,11 +103,11 @@ func (ns *NetworkSimulator) StartPipeline() {
 		for msg := range ns.FromNodePipe {
 
 			// 1. Read configuration safely using Read Lock (RLock)
-			ns.mu.RLock()
+			ns.Mu.RLock()
 			currentDropRate := ns.dropRate
 			currentMinDelay := ns.minDelay
 			currentMaxDelay := ns.maxDelay
-			ns.mu.RUnlock()
+			ns.Mu.RUnlock()
 
 			// 2. Process Drops
 			//since we dont know thw number of messages that are present in the network channel , will ocme or has come,
@@ -164,11 +164,11 @@ func (ns *NetworkSimulator) ReturnPipeline(FromManager chan protocol.Message) {
 		for msg := range FromManager {
 
 			// 2. Read configuration safely using Read Lock (RLock)
-			ns.mu.RLock()
+			ns.Mu.RLock()
 			currentDropRate := ns.dropRate
 			currentMinDelay := ns.minDelay
 			currentMaxDelay := ns.maxDelay
-			ns.mu.RUnlock()
+			ns.Mu.RUnlock()
 
 			// 3. PROCESS RETURN DROPS: Manager replies can get lost in flight too!
 			if rand.Float64() < currentDropRate {
@@ -204,10 +204,10 @@ func (ns *NetworkSimulator) ReturnPipeline(FromManager chan protocol.Message) {
 				}
 				time.Sleep(delay) // Simulated return flight wire transit time
 
-				ns.mu.RLock()
+				ns.Mu.RLock()
 				// Look up the target node's buffer channel pointer in our clipboard map
 				targetNodeBufferChannel, exists := ns.NodeRegistry[m.NodeId]
-				ns.mu.RUnlock()
+				ns.Mu.RUnlock()
 
 				if exists {
 					// THE SYMMETRICAL HANDOFF: Drop packet into node buffer after the delay!
@@ -222,8 +222,8 @@ func (ns *NetworkSimulator) ReturnPipeline(FromManager chan protocol.Message) {
 }
 
 func (ns *NetworkSimulator) AddToRegistry(nodeId string, nodeBuffer chan protocol.Message) {
-	ns.mu.Lock() // Grab write lock to modify the map safely
-	defer ns.mu.Unlock()
+	ns.Mu.Lock() // Grab write lock to modify the map safely
+	defer ns.Mu.Unlock()
 
 	ns.NodeRegistry[nodeId] = nodeBuffer
 	fmt.Printf("[NETWORK REGISTRY] Successfully mapped route for %s\n", nodeId)
