@@ -1,0 +1,75 @@
+/* components/LockManager.module.css */
+
+.managerCard {
+  border: 1px solid #333;
+  padding: 25px;
+  border-radius: 8px;
+  background-color: #141414;
+}
+
+.managerCard h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+/* --- VERTICAL METRICS STACK --- */
+.verticalStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Spaces your parameters one below the other */
+}
+
+.metricLine {
+  font-size: 1.05rem;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metricLine strong {
+  color: #fff;
+  min-width: 140px; /* Aligns data column labels perfectly */
+}
+
+/* --- THE YELLOW HIGHLIGHT --- */
+.yellowHighlight {
+  color: #000 !important;
+  background-color: #f1c40f; /* Vibrant Yellow Accent */
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.3);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.idleValue {
+  color: #666;
+  font-style: italic;
+}
+
+/* --- THE COUNTDOWN BLOCK --- */
+.countdownBox {
+  margin-top: 20px;
+  padding: 12px 15px;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 4px solid #4caf50;
+  border-radius: 4px;
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulseBox 2s infinite ease-in-out;
+}
+
+@keyframes pulseBox {
+  0% { border-left-color: #4caf50; }
+  50% { border-left-color: #81c784; }
+  100% { border-left-color: #4caf50; }
+}
