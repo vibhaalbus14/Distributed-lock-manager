@@ -36,3 +36,5 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+require github.com/gorilla/websocket v1.5.3 // indirect
