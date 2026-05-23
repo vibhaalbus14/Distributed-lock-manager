@@ -15,7 +15,7 @@ func main() {
 	server.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST,PUT, GET, OPTIONS")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -31,15 +31,20 @@ func main() {
 		nodes.GET("/status", handlers.Get_node_status)
 		nodes.POST("/kill", handlers.Node_kill_status)
 		nodes.POST("/request", handlers.Node_request_status)
+		nodes.POST("/restart", handlers.Node_restart)
 	}
 	//// 1. Path Param: Explicitly type the colon ":" followed by the name
 	//server.POST("/api/nodes/:node_id/kill", handlers.Node_kill_status)
 
 	// 2. Query Param: Type the plain static path. NO question marks, NO colons!
 	//server.PUT("/api/network/droprate", handlers.Change_droprate)
+	network := server.Group("/network")
+	{
+		network.GET("/stream", handlers.Network_stream)
+		network.PUT("/droprate", handlers.Change_droprate)
+		network.PUT("/latency", handlers.Change_latency)
+	}
 
-	server.PUT("/droprate", handlers.Change_droprate)
-	server.PUT("/latency", handlers.Change_latency)
 	server.GET("/exit", handlers.Exit_server)
 	server.Run(":8080")
 	<-startup.ShutdownChan
