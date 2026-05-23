@@ -33,7 +33,7 @@ export default function LockManager({ fencingToken, currentHolder, opTime }) {
     
       {currentHolder && opTime > 0? (
         <div className={styles.countdownBox}>
-          ⏱️ Node execution active: performing distributed task operations for {opTime}s before lease expiration...
+          ⏱️ Node execution active: performing distributed task operations for {opTime}s before releasing lock...
         </div>
       ):<div className={styles.countdownBox}>Lock is Available, nodes are free to request</div>}
     </div>
