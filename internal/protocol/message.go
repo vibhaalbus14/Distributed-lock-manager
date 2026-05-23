@@ -17,3 +17,11 @@ type Message struct {
 	Type   MsgType `json:"type"`   //mesaage type
 	Token  int64   `json:"token"`  //token to filter stale packets
 } //It tells Go’s JSON package (encoding/json) how this struct field should appear when converting between Go structs and JSON.
+
+var MsgMap = map[MsgType]string{
+	0: "Mssg Request",
+	1: "Mssg Grant",
+	2: "Mssg Release",
+	3: "Mssg HeartBeat",
+	4: "Mssg Evict",
+}
