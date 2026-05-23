@@ -14,8 +14,8 @@ type LockManager struct {
 	FencingToken        int64                 // Monotonically increasing generation ID to stop stale writes
 	LeaseDuration       time.Duration         // How long a lock stays valid without a heartbeat (e.g., 5s)
 	LeaseTimer          *time.Timer           // pointer to timer obj,The underlying OS countdown timer
-	mu                  sync.Mutex            // Safeguards global manager variables from competing threads
-	OutgoingNetworkPipe chan protocol.Message // Channel leading back out to the nodes (via network simulation)
+	Mu                  sync.Mutex            // Safeguards global manager variables from competing threads
+	OutgoingNetworkPipe chan protocol.Message // Channel leading back out to the nodes (via network siMulation)
 }
 
 //create new channel indicating manger free
@@ -39,8 +39,8 @@ func NewLockManager(leaseDuration time.Duration, OutgoingNetworkPipe chan protoc
 
 // ProcessMessage accepts an incoming packet and handles it according to its type
 func (lm *LockManager) ProcessMessage(msg protocol.Message) {
-	lm.mu.Lock()         // lock is taken while reaing all values of struct so that no two process will have conflict at the same time
-	defer lm.mu.Unlock() //this is done only after executing the mapped function
+	lm.Mu.Lock()         // lock is taken while reaing all values of struct so that no two process will have conflict at the same time
+	defer lm.Mu.Unlock() //this is done only after executing the mapped function
 
 	// Exactly what you guessed! Going over every message depending on type:
 	switch msg.Type {
@@ -55,7 +55,7 @@ func (lm *LockManager) ProcessMessage(msg protocol.Message) {
 	}
 }
 
-// --- CORE STATE ROUTINES (Executed under lm.mu Lock) ---
+// --- CORE STATE ROUTINES (Executed under lm.Mu Lock) ---
 
 func (lm *LockManager) handleRequest(NodeId string) {
 	if lm.CurrentHolder == "" {
@@ -66,11 +66,11 @@ func (lm *LockManager) handleRequest(NodeId string) {
 		return
 	} else {
 		//  Resource is busy. Add the node to our FIFO wait list array.
-		for _, queuedID := range lm.WaitQueue {
-			if queuedID == NodeId {
-				return // Avoid duplicate queueing
-			}
-		}
+		// for _, queuedID := range lm.WaitQueue {
+		// 	if queuedID == NodeId {
+		// 		return // Avoid duplicate queueing
+		// 	}
+		// }
 		lm.WaitQueue = append(lm.WaitQueue, NodeId)
 		fmt.Printf("[MANAGER] Lock busy. Node %s appended to WaitQueue: %v\n", NodeId, lm.WaitQueue)
 	}
@@ -144,8 +144,8 @@ func (lm *LockManager) startLeaseTimer(nodeID string) {
 	fmt.Println(("ticker start"))
 	fmt.Println()
 	lm.LeaseTimer = time.AfterFunc(lm.LeaseDuration, func() {
-		lm.mu.Lock()
-		defer lm.mu.Unlock()
+		lm.Mu.Lock()
+		defer lm.Mu.Unlock()
 
 		// Safety double-check: Verify the node hasn't changed or released in those 5s
 		if lm.CurrentHolder == nodeID {
