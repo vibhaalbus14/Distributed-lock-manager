@@ -1,77 +1,35 @@
-/* App.module.css */
+/* Add these classes to your existing App.module.css file */
 
-.dashboardContainer {
-  padding: 20px;
-  background: #111;
-  min-height: 100vh;
-  color: #fff;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.dashboardTitle {
-  border-bottom: 2px solid #222;
-  padding-bottom: 10px;
-  margin-bottom: 30px;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* --- THE SYSTEM VISUAL FLOW PIPELINE --- */
-.pipelineContainer {
+.exitActionContainer {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
+  justify-content: center;
+  margin-top: -15px;
+  margin-bottom: 30px;
   width: 100%;
 }
 
-.componentWrapper {
-  width: 100%;
-  max-width: 900px;
+.exitBtn {
+  background-color: #c0392b; /* Deep Red Alert Color */
+  color: #fff;
+  border: 1px solid #e74c3c;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(192, 57, 43, 0.2);
 }
 
-.pipelineArrow {
-  font-size: 24px;
-  color: #555;
-  text-align: center;
-  margin: 5px 0;
-  animation: pulseArrow 2s infinite ease-in-out;
-  user-select: none;
+.exitBtn:hover {
+  background-color: #e74c3c; /* Brighter alert red on hover */
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+  transform: translateY(-1px);
 }
 
-@keyframes pulseArrow {
-  0% { opacity: 0.4; transform: translateY(-2px); }
-  50% { opacity: 1; transform: translateY(2px); }
-  100% { opacity: 0.4; transform: translateY(-2px); }
-}
-
-/* --- REUSEABLE DYNAMIC NODE STATE CLASSES --- */
-/* (These will be passed down or mapped to style your nodes cleanly) */
-.stateIdle {
-  background-color: #333333 !important;
-  border-color: #555555 !important;
-  color: #aaa !important;
-}
-
-.stateRequest {
-  background-color: #d35400 !important; /* Orange */
-  border-color: #e67e22 !important;
-  color: #fff !important;
-  box-shadow: 0 0 10px rgba(230, 126, 34, 0.5);
-}
-
-.stateHolding {
-  background-color: #27ae60 !important; /* Green */
-  border-color: #2ecc71 !important;
-  color: #fff !important;
-  box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
-}
-
-.stateCrashed {
-  background-color: #c0392b !important; /* Red */
-  border-color: #e74c3c !important;
-  color: #ffcccc !important;
-  text-decoration: line-through;
-  opacity: 0.8;
+.exitBtn:active {
+  transform: translateY(0);
 }

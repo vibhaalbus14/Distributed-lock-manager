@@ -3,7 +3,7 @@ import { useEffect, useReducer } from 'react';
 import NodeGroup from './components/nodeGroup';     
 import Network from './components/network';
 import LockManager from './components/lockManager';
-import './app.module.css';
+import appStyles from './app.module.css';
 
 function reducer(state, action) {
   switch (action.type) {
@@ -82,6 +82,23 @@ export default function App() {
     return () => ws.close();
   }, []); 
 
+  const handleExitServer = async () => {
+    const confirmShutdown = window.confirm("Are you sure you want to completely terminate the Go cluster instance?");
+    if (!confirmShutdown) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/exit`, {
+        method: "GET", // Automatically matches your preferred endpoint router configuration
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Backend Response: ${data.message || "Shutdown initialized."}`);
+      }
+    } catch (err) {
+      console.error("Failed to execute server shutdown command sequence:", err);
+    }
+  };
   
 
   // Destructure state variables to pass into UI layouts
@@ -90,6 +107,11 @@ export default function App() {
   return (
     <div style={{ padding: "20px", background: "#111", minHeight: "100vh", color: "#fff" }}>
       <h2><center>Distributed Lock Manager Dashboard</center></h2>
+      <div className={appStyles.exitActionContainer}>
+        <button onClick={handleExitServer} className={appStyles.exitBtn}>
+          🛑 Shutdown Cluster Engine
+        </button>
+      </div>
       
       {/* Visual node status grid matrix layout */}
       <NodeGroup nodes={nodeStatus} />
