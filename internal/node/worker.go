@@ -31,9 +31,36 @@ type Node struct {
 	AttemptCount   int                   //no of attempts used for exponential backoff
 }
 
+type NodeDelta struct {
+	NodeId string
+	Status NodeStatus
+}
+
+type OpEvent struct {
+	NodeId string
+	OpTime time.Duration
+}
+
+var (
+	NodeDeltaChannel chan NodeDelta
+	OpEventChannel   chan OpEvent
+)
+
+func init() {
+	NodeDeltaChannel = make(chan NodeDelta, 100)
+	OpEventChannel = make(chan OpEvent, 100)
+} //automatically called by compiler when the package is seen
+
+func PushDeltaChannel(n *Node) {
+	NodeDeltaChannel <- NodeDelta{NodeId: n.Id, Status: n.Status}
+}
+
+func PushOpChannel(n *Node, tm time.Duration) {
+	OpEventChannel <- OpEvent{NodeId: n.Id, OpTime: tm}
+}
+
 func CreateNode(networkMsg chan protocol.Message, bufferMsg chan protocol.Message) *Node {
 	generatedId := fmt.Sprint(uuid.New())
-
 	return &Node{Id: generatedId, Status: 0, NetworkChannel: networkMsg, StopHeartBeat: make(chan bool, 1), bufferChannel: bufferMsg}
 
 }
@@ -46,6 +73,7 @@ func (n *Node) RequestLock() {
 	} //not idle
 
 	n.Status = Request
+	PushDeltaChannel(n)
 	n.Mu.Unlock()
 	fmt.Printf("[NODE %s] State changed to REQUESTING. Transmitting MsgRequest...\n", n.Id)
 
@@ -66,6 +94,7 @@ func (n *Node) ReleaseLock() {
 	}
 
 	n.Status = Idle
+	PushDeltaChannel(n)
 	n.Mu.Unlock()
 	n.StopHeartBeat <- true
 	fmt.Printf("[NODE %s] Yielding Resource. Transmitting MsgRelease...\n", n.Id)
@@ -86,6 +115,7 @@ func (n *Node) Restart() {
 
 	//set all the members of that node to def
 	n.Status = Idle
+	PushDeltaChannel(n)
 	//no cvhange in id
 	n.Mu.Unlock()
 	//the stophearbeat channel could be corrupted or may contain stale data=> make a new channel
@@ -106,6 +136,7 @@ func (n *Node) Kill() {
 		}
 	}
 	n.Status = Crashed
+	PushDeltaChannel(n)
 	fmt.Printf("[NODE %s] !!! HARD SYSTEM CRASH SIMuLATED !!!\n", n.Id)
 }
 
@@ -118,7 +149,7 @@ func (n *Node) StartHeartbeatLoop() {
 	}
 	n.Mu.Unlock()
 	fmt.Printf("heartbeat started for node %s", n.Id)
-	fmt.Println()
+
 	go func() { //another backround routine that constantly sends heartbeat to manager inc or restart the lock lease timer
 		//time.NewTicker creates a timer object that internally contains and manages a channel. That channel is accessible via ticker.C.
 		ticker := time.NewTicker(1500 * time.Millisecond) // Heartbeat cadence , evry time the timer obj
@@ -171,8 +202,10 @@ func (n *Node) NodeBufferIteration() {
 			case protocol.MsgGrant:
 				// SUCCESS: The manager officially gave this node exclusive control of the lock!
 				n.Status = Holding
+
 				n.CurrentToken = msg.Token // Cache the incremented fencing token in local RAM
 				fmt.Printf("[NODE %s]  LOCK GRANTED! State -> HOLDING. Fencing Token: %d\n", n.Id, msg.Token)
+				PushDeltaChannel(n)
 				n.Mu.Unlock()
 
 				n.StartHeartbeatLoop()
@@ -181,6 +214,7 @@ func (n *Node) NodeBufferIteration() {
 				val := rand.IntN(15) + 5 //setting 5 as base
 				duration := time.Duration(val) * time.Second
 				fmt.Printf("[NODE %s] started performing operation, it will last for %d sec", n.Id[:5], val)
+				PushOpChannel(n, duration)
 
 				// It will wait for 'duration' to pass, then call n.ReleaseLock() automatically.
 				time.AfterFunc(duration, func() {
@@ -191,10 +225,12 @@ func (n *Node) NodeBufferIteration() {
 			case protocol.MsgEvict:
 				fmt.Println("inside message evict")
 				if n.Status != Holding {
+					n.Mu.Unlock()
 					return
 				}
 				n.StopHeartBeat <- true
 				n.Status = Idle
+				PushDeltaChannel(n)
 				n.AttemptCount++
 
 				backoffSecs := 1 << uint(n.AttemptCount)
