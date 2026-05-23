@@ -16,7 +16,7 @@ var (
 	lockManager      *manager.LockManager
 )
 
-func Initialize() {
+func init() {
 	ShutdownChan = make(chan os.Signal, 1)
 	fromManagerChannel := make(chan protocol.Message, 250)
 	toManagerChannel := make(chan protocol.Message, 250)

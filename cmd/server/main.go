@@ -23,8 +23,6 @@ func main() {
 		c.Next()
 	})
 
-	//initailse all channels
-	startup.Initialize()
 	nodes := server.Group("/nodes")
 	{
 		nodes.GET("", handlers.Create_node)
