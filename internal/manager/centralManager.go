@@ -18,6 +18,14 @@ type LockManager struct {
 	OutgoingNetworkPipe chan protocol.Message // Channel leading back out to the nodes (via network simulation)
 }
 
+//create new channel indicating manger free
+
+var ManagerFreeChan chan bool
+
+func init() {
+	ManagerFreeChan = make(chan bool, 100)
+}
+
 // NewLockManager initializes our central controller with strict defaults
 func NewLockManager(leaseDuration time.Duration, OutgoingNetworkPipe chan protocol.Message) *LockManager {
 	return &LockManager{
@@ -125,6 +133,8 @@ func (lm *LockManager) rotateLock() {
 	} else {
 		lm.CurrentHolder = ""
 		fmt.Println("[MANAGER] Lock is completely free. No nodes are waiting.")
+		ManagerFreeChan <- true
+		//pass this message to opEvent channel
 	}
 }
 
@@ -132,6 +142,7 @@ func (lm *LockManager) startLeaseTimer(nodeID string) {
 	// time.AfterFunc spawns a background thread that sleeps for 5 seconds.
 	// If it isn't stopped before the timer pops, it triggers the eviction code!
 	fmt.Println(("ticker start"))
+	fmt.Println()
 	lm.LeaseTimer = time.AfterFunc(lm.LeaseDuration, func() {
 		lm.mu.Lock()
 		defer lm.mu.Unlock()
