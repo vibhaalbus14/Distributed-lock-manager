@@ -12,7 +12,7 @@ export default function Network({ logMsg }) {
     setMinLatency(e.target.value);
     async function callLatency() {
       try {
-        const res = await fetch(`http://localhost:8080/network/latency/minLatency=${minLatency}&maxLatency=${maxLatency}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency/minLatency=${minLatency}&maxLatency=${maxLatency}`, {
           method: "PUT",
         });
         if (!res.ok) {
@@ -30,7 +30,7 @@ export default function Network({ logMsg }) {
     setMaxLatency(e.target.value);
     async function callLatency() {
       try {
-        const res = await fetch(`http://localhost:8080/network/latency?minLatency=${minLatency}&maxLatency=${maxLatency}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency?minLatency=${minLatency}&maxLatency=${maxLatency}`, {
           method: "PUT",
         });
         if (!res.ok) {
@@ -47,7 +47,7 @@ export default function Network({ logMsg }) {
     setDroprate(e.target.value);
     async function callDroprate() {
       try {
-        const res = await fetch(`http://localhost:8080/network/droprate?rate=${droprate}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/droprate?rate=${droprate}`, {
           method: "PUT",
         });
         if (!res.ok) {

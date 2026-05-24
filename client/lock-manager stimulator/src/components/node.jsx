@@ -15,7 +15,7 @@ export function Node({ status, id }) {
   
   const handleRequestLock = async () => {
     try {
-      await fetch("http://localhost:8080/nodes/request", {
+      await fetch(`${import.meta.env.VITE_API_HTTP_URL}/nodes/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id }) 
@@ -27,7 +27,7 @@ export function Node({ status, id }) {
 
   const handleKillNode = async () => {
     try {
-      await fetch("http://localhost:8080/nodes/kill", {
+      await fetch(`${import.meta.env.VITE_API_HTTP_URL}/nodes/kill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id }) 
@@ -39,7 +39,7 @@ export function Node({ status, id }) {
 
   const handleResetNode = async () => {
     try {
-      await fetch("http://localhost:8080/nodes/restart", {
+      await fetch(`${import.meta.env.VITE_API_HTTP_URL}/nodes/restart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id }) 

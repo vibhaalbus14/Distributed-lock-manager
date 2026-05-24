@@ -6,7 +6,7 @@ export default function NodeGroup({ nodes }) {
 
   async function createNode() {
     try {
-      const res = await fetch("http://localhost:8080/nodes", {
+      const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/nodes`, {
         method: "GET", 
       });
 

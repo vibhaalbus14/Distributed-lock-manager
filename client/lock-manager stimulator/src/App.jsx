@@ -56,7 +56,7 @@ export default function App() {
 
   // Multi-Channel Live WebSocket Data Listener
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080/network/stream");
+    const ws = new WebSocket(`${import.meta.env.VITE_API_WS_URL}/network/stream`);
     console.log("ws connection established successfully from react client")
     ws.onmessage = (event) => {
       
