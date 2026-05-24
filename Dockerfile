@@ -1,5 +1,5 @@
 # === STAGE 1: Low-Memory Build Stage ===
-FROM golang:1.21-alpine AS builder 
+FROM golang:1.22-alpine AS builder 
 
 # Disable CGO to keep the binary fully static and reduce build memory overhead
 ENV CGO_ENABLED=0
