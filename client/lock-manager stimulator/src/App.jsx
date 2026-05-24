@@ -46,7 +46,8 @@ function reducer(state, action) {
 
 
     default:
-      throw new Error(`Unidentified action type: ${action.type}`); 
+      console.warn(`[WS] Unhandled payload channel type received: ${action.Type}`);
+  break;
   }
 }
 
