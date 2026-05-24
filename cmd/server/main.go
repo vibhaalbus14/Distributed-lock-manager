@@ -22,7 +22,7 @@ func main() {
 		}
 		c.Next()
 	})
-
+	go handlers.StartChannelListener()
 	nodes := server.Group("/nodes")
 	{
 		nodes.GET("", handlers.Create_node)
@@ -44,6 +44,7 @@ func main() {
 	}
 
 	server.GET("/exit", handlers.Exit_server)
+
 	server.Run(":8080")
 	<-startup.ShutdownChan
 
