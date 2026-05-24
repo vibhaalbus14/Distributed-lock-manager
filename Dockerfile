@@ -15,9 +15,7 @@ RUN go mod download
 COPY . .
 
 # 🚀 FREE TIER TRICK: 
-# -ldflags="-s -w" strips debug information to shrink the file size.
-# -p 2 limits the compiler to a maximum of 2 parallel threads so it doesn't max out free RAM limits.
-#RUN go build -ldflags="-s -w" -p 2 -o dlm-server cmd/main.go
+RUN go build -ldflags="-s -w" -p 2 -o dlm-server cmd/main.go
 
 # === STAGE 2: Absolute Bare-Minimum Production Runtime ===
 FROM scratch
