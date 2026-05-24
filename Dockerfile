@@ -14,8 +14,8 @@ RUN go mod download
 # Copy the rest of your backend files
 COPY . .
 
-# 🚀 FREE TIER TRICK: 
-RUN go build -ldflags="-s -w" -p 2 -o dlm-server cmd/main.go
+#
+RUN go build -o dlm-server ./cmd/server/main.go
 
 # === STAGE 2: Absolute Bare-Minimum Production Runtime ===
 FROM scratch
