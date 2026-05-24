@@ -11,3 +11,5 @@ An interactive, real-time distributed systems simulation engine demonstrating th
 * **Dynamic Network Simulator:** Empowers operators to introduce packet-drop risk and execution latencies dynamically.
 * **Zero-Downtime Soft-Reset:** Purges node registries and cluster variables instantly via synchronized mutex controls while keeping core memory channels awake and operational.
 ...
+
+  Live link: https://distributed-lock-manager-simulator.netlify.app/
