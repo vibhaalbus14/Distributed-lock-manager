@@ -12,7 +12,7 @@ export default function Network({ logMsg }) {
     setMinLatency(e.target.value);
     async function callLatency() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency/minLatency=${minLatency}&maxLatency=${maxLatency}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency?minLatency=${minLatency}&maxLatency=${maxLatency}`, {
           method: "PUT",
         });
         if (!res.ok) {

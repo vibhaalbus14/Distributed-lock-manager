@@ -94,7 +94,7 @@ export default function App() {
     if (!confirmShutdown) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/exit`, {
+      const res = await fetch(`${import.meta.env.VITE_API_WS_URL}/exit`, {
         method: "GET", // Automatically matches your preferred endpoint router configuration
       });
       
