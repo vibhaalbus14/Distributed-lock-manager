@@ -94,7 +94,7 @@ export default function App() {
     if (!confirmShutdown) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_WS_URL}/exit`, {
+      const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/exit`, {
         method: "GET", // Automatically matches your preferred endpoint router configuration
       });
       
@@ -102,7 +102,7 @@ export default function App() {
        console.error("Failed to execute server shutdown command sequence:",res.ok);
       }
     } catch (err) {
-      console.error("Failed to execute server shutdown command sequence:", err);
+      console.error("Could not execute exit", err);
     }
   };
   
