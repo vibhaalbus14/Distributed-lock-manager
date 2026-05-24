@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // 🚀 Imports our scoped styling layouts
-import styles from "./Network.module.css";
+import styles from "./network.module.css";
 
 export default function Network({ logMsg }) {
   const [minLatency, setMinLatency] = useState(0);

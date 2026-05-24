@@ -2,7 +2,7 @@ import React from 'react';
 import nodeIcon from '../assets/node.svg';
 
 // 🚀 Local module tracking styles
-import styles from './Node.module.css';
+import styles from './node.module.css';
 
 const STATUS_MAP = {
   0: "Idle",

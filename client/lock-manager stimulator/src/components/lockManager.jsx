@@ -1,4 +1,4 @@
-import styles from './LockManager.module.css';
+import styles from './lockManager.module.css';
 
 export default function LockManager({ fencingToken, currentHolder, opTime }) {
   return (
