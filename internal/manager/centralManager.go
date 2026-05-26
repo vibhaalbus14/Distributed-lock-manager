@@ -148,16 +148,16 @@ func (lm *LockManager) startLeaseTimer(nodeID string) {
 		defer lm.Mu.Unlock()
 
 		// Safety double-check: Verify the node hasn't changed or released in those 5s
-		if lm.CurrentHolder == nodeID {
-			fmt.Printf("[MANAGER ] !!! LEASE EXPIRED !!! Node %s missed heartbeats. Forcibly evicting...\n", nodeID)
-			go func(target string) {
-				lm.OutgoingNetworkPipe <- protocol.Message{
-					NodeId: target, // Destination node ID
-					Type:   protocol.MsgEvict,
-				}
-			}(nodeID)
-			lm.rotateLock() // Strip lock away and promote the next queued node!
-		}
+
+		fmt.Printf("[MANAGER ] !!! LEASE EXPIRED !!! Node %s missed heartbeats. Forcibly evicting...\n", nodeID)
+		go func(target string) {
+			lm.OutgoingNetworkPipe <- protocol.Message{
+				NodeId: target, // Destination node ID
+				Type:   protocol.MsgEvict,
+			}
+		}(nodeID)
+		lm.rotateLock() // Strip lock away and promote the next queued node!
+
 	})
 }
 
