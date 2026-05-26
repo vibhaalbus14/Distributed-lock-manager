@@ -9,7 +9,11 @@ export default function Network({ logMsg }) {
   const [droprate, setDroprate] = useState(0);
 
   function minLatencyChange(e) {
-    setMinLatency(e.target.value);
+    if(parseInt(e.target.value)>maxLatency){
+      alert("Minimum Latency cannot be higher than Maximum Latency, please update the value")
+      return
+    }
+    setMinLatency(parseInt(e.target.value));
     async function callLatency() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency?minLatency=${minLatency}&maxLatency=${maxLatency}`, {
@@ -27,7 +31,11 @@ export default function Network({ logMsg }) {
 
   // Adjusted onChange references below to execute closures passing event (e) targets
   function maxLatencyChange(e) {
-    setMaxLatency(e.target.value);
+    if(parseInt(e.target.value)<minLatency){
+      alert("Maximum Latency cannot be lower than Minimum Latency, please update the value")
+      return
+    }
+    setMaxLatency(parseInt(e.target.value));
     async function callLatency() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_HTTP_URL}/network/latency?minLatency=${minLatency}&maxLatency=${maxLatency}`, {
@@ -76,8 +84,15 @@ export default function Network({ logMsg }) {
       <div className={styles.sliderGrid}>
         
         <div className={styles.controlGroup}>
-          <label>Min Latency: <span>{minLatency}ms</span></label>
-          <input 
+          <label className={styles.minLatency}>Min Latency: <span>{minLatency}ms</span></label>
+          <div className={styles.HiddenBoxMin}> <div className={styles.tooltip_title}>
+    <span>How is latency calculated in network</span>
+    <span className={styles.info_icon}>?</span>
+  </div>
+  <div className={styles.tooltip_body}>
+   Calculates a random delay time for each packet between your minimum and maximum settings. It starts with your minimum delay as the base, then adds a random slice of time up to your maximum limit. This mimics real-world internet lag, which constantly fluctuates instead of staying perfectly flat.
+  </div></div>
+          <input
             type="range" 
             min="0" 
             max="50" 
@@ -89,7 +104,17 @@ export default function Network({ logMsg }) {
         </div>
 
         <div className={styles.controlGroup}>
-          <label>Max Latency: <span>{maxLatency}ms</span></label>
+          <label className={styles.maxLatency}>Max Latency: <span>{maxLatency}ms</span></label>
+          <div className={styles.HiddenBoxMax}>
+            <div className={styles.tooltip_title}>
+    <span>How is latency calculated in network</span>
+    <span className={styles.tooltip_icon}>?</span>
+  </div>
+  
+  {/* Part 2: The Core Description Body */}
+  <div className={styles.tooltip_body}>
+   Calculates a random delay time for each packet between your minimum and maximum settings. It starts with your minimum delay as the base, then adds a random slice of time up to your maximum limit. This mimics real-world internet lag, which constantly fluctuates instead of staying perfectly flat.
+  </div></div>
           <input 
             type="range" 
             min="0" 
@@ -102,7 +127,21 @@ export default function Network({ logMsg }) {
         </div>
 
         <div className={styles.controlGroup}>
-          <label>Drop Rate: <span>{(parseFloat(droprate) * 100).toFixed(0)}%</span></label>
+          <label className={styles.droprate}>Drop Rate: <span>{(parseFloat(droprate) * 100).toFixed(0)}%</span></label>
+          <div className={styles.HiddenBoxDroprate}>
+  {/* Part 1: The Title Heading Row */}
+  <div className={styles.tooltip_title}>
+    <span>How is droprate calculated in network</span>
+    <span className={styles.tooltip_icon}>?</span>
+  </div>
+  
+  {/* Part 2: The Core Description Body */}
+  <div className={styles.tooltip_body}>
+    Generates a random percentage for each incoming packet. If that number falls below your chosen drop rate threshold, 
+    the packet is instantly discarded to simulate network loss. This tests how effectively the cluster recovers from 
+    missing messages and maintains consensus under unstable conditions.
+  </div>
+</div>
           <input 
             type="range" 
             min="0.0" 
